@@ -37,3 +37,13 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
   - UpdateAsync : Mise à jour d'une tâche existante
   - DeleteAsync : Suppression d'une tâche
   - GetByStateAsync : Récupération des tâches par état
+
+### Étape 4 - Mise en place de la couche Application (14/12/2024)
+- Implémentation du pattern CQRS pour séparer les opérations de lecture et d'écriture
+- Création des interfaces de base pour le CQRS :
+  - IQuery : Interface marqueur pour les requêtes
+  - IQueryHandler : Interface générique pour les gestionnaires de requêtes
+  - ICommandHandler : Interface générique pour les gestionnaires de commandes
+- Implémentation de la première Query GetAllTasks :
+  - GetAllTasksQuery : Définition de la requête
+  - GetAllTasksQueryHandler : Gestionnaire qui utilise le repository pour récupérer les tâches
