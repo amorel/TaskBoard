@@ -76,3 +76,13 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
 - Création de la migration initiale pour la table Tasks
 - Application de la migration pour créer la base de données
 - Intégration de l'infrastructure dans le projet Blazor Server
+
+### Étape 8 - Configuration de la couche Présentation (14/12/2024)
+- Mise en place du pattern MVVM :
+  - Création des ViewModels pour les tâches
+  - Implémentation du service de gestion des tâches
+  - Configuration du système de notification pour les mises à jour en temps réel
+- Architecture de la couche présentation :
+  - Séparation des responsabilités avec les ViewModels
+  - Service façade pour simplifier l'interaction avec la couche Application
+  - Système d'événements pour les mises à jour en temps réel
