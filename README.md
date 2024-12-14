@@ -47,3 +47,14 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
 - Implémentation de la première Query GetAllTasks :
   - GetAllTasksQuery : Définition de la requête
   - GetAllTasksQueryHandler : Gestionnaire qui utilise le repository pour récupérer les tâches
+
+### Étape 5 - Implémentation des Commands et Queries (14/12/2024)
+- Implémentation des Queries (opérations de lecture) :
+  - GetTaskById : Récupération d'une tâche spécifique
+  - GetTasksByState : Filtrage des tâches par état
+- Implémentation des Commands (opérations d'écriture) :
+  - CreateTask : Création d'une nouvelle tâche
+  - UpdateTask : Mise à jour d'une tâche existante
+  - DeleteTask : Suppression d'une tâche
+- Ajout de la classe Unit pour gérer les commandes sans retour de valeur
+- Gestion des erreurs basique avec InvalidOperationException pour les cas d'erreur simples
