@@ -58,3 +58,15 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
   - DeleteTask : Suppression d'une tâche
 - Ajout de la classe Unit pour gérer les commandes sans retour de valeur
 - Gestion des erreurs basique avec InvalidOperationException pour les cas d'erreur simples
+
+### Étape 6 - Configuration de l'Infrastructure avec Entity Framework Core (14/12/2024)
+- Mise en place de la persistance avec SQLite
+- Configuration d'Entity Framework Core :
+  - TaskBoardDbContext : Configuration du contexte de base de données
+  - Configuration des entités avec Fluent API
+  - Implémentation du TaskRepository
+  - Mise en place de l'injection de dépendances
+- Choix techniques :
+  - Utilisation de SQLite pour sa simplicité et sa portabilité
+  - Configuration des contraintes de base de données via Fluent API
+  - Implémentation du pattern Repository
