@@ -19,3 +19,11 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
   - Une meilleure testabilité
   - Une meilleure maintenabilité
   - Une indépendance des couches externes (UI, Base de données)
+
+### Étape 2 - Création des entités du domaine (14/12/2024)
+- Création de l'entité Task avec ses propriétés essentielles
+- Utilisation d'un enum pour représenter les statuts des tâches (Todo, InProgress, Done)
+- Choix d'un enum plutôt qu'une entité séparée pour :
+  - Simplifier l'implémentation initiale
+  - Garantir un ensemble fixe de statuts bien définis
+  - Faciliter la maintenance et la compréhension du code
