@@ -5,7 +5,7 @@ namespace TaskBoard.Domain.Entities
     /// <summary>
     /// Represents a task in the system
     /// </summary>
-    public class Task
+    public class BoardTask
     {
         public Guid Id { get; set; }
         public string Title { get; set; } = string.Empty;

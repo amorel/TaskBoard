@@ -27,3 +27,13 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
   - Simplifier l'implémentation initiale
   - Garantir un ensemble fixe de statuts bien définis
   - Faciliter la maintenance et la compréhension du code
+
+### Étape 3 - Définition des interfaces du repository (14/12/2024)
+- Création de l'interface ITaskRepository définissant toutes les opérations CRUD
+- Ajout des opérations asynchrones suivantes :
+  - GetAllAsync : Récupération de toutes les tâches
+  - GetByIdAsync : Récupération d'une tâche par son ID
+  - AddAsync : Ajout d'une nouvelle tâche
+  - UpdateAsync : Mise à jour d'une tâche existante
+  - DeleteAsync : Suppression d'une tâche
+  - GetByStateAsync : Récupération des tâches par état
