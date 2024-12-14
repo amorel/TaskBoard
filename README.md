@@ -70,3 +70,9 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
   - Utilisation de SQLite pour sa simplicité et sa portabilité
   - Configuration des contraintes de base de données via Fluent API
   - Implémentation du pattern Repository
+
+### Étape 7 - Configuration des Migrations Entity Framework Core (14/12/2024)
+- Configuration de la chaîne de connexion SQLite dans appsettings.json
+- Création de la migration initiale pour la table Tasks
+- Application de la migration pour créer la base de données
+- Intégration de l'infrastructure dans le projet Blazor Server
