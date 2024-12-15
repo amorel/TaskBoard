@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="AspNetCore.SassCompiler" Version="1.69.5" />
     <PackageReference Include="Markdig" Version="0.35.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

@@ -11,10 +11,21 @@ using TaskBoard.Domain.Entities;
 using TaskBoard.Application.Common.Models;
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 Console.WriteLine("Application starting...");
+
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Services.AddApplicationInsightsTelemetry();
+
+builder.Logging.SetMinimumLevel(LogLevel.Trace);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -26,6 +37,11 @@ builder.Services.AddServerSideBlazor(options =>
 {
     options.DetailedErrors = true;
     options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(3);
+});
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
 
 // Configuration du logging
@@ -86,7 +102,33 @@ if (!app.Environment.IsDevelopment())
         }
     }
 
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            context.Response.StatusCode = 500;
+            context.Response.ContentType = "text/html";
+
+            var exceptionHandlerPathFeature =
+                context.Features.Get<IExceptionHandlerPathFeature>();
+
+            if (exceptionHandlerPathFeature?.Error != null)
+            {
+                var logger = context.RequestServices
+                    .GetRequiredService<ILogger<Program>>();
+
+                logger.LogError(exceptionHandlerPathFeature.Error,
+                    "Une erreur est survenue : {ErrorMessage}",
+                    exceptionHandlerPathFeature.Error.Message);
+
+                await context.Response.WriteAsync("<html><body>\n");
+                await context.Response.WriteAsync(
+                    "<h2>Une erreur est survenue dans l'application.</h2>\n");
+                await context.Response.WriteAsync("<hr>\n");
+                await context.Response.WriteAsync("</body></html>\n");
+            }
+        });
+    });
     app.UseHsts();
 }
 else
