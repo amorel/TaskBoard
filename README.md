@@ -184,3 +184,56 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
   - Gestion des contraintes de base de données
 
 ![Résultats des tests unitaires pour la couche Infrastructure](/assets/img/TaskBoard.Infrastructure.Tests.png "Résultats des tests unitaires pour la couche Infrastructure")
+
+### Étape 14 - Tests de la couche Presentation (15/12/2024)
+- Tests des Services :
+  - TaskService : Tests du mapping entre ViewModels et entités
+  - Tests des notifications de changements (OnChange)
+  - ReadmeService : Tests du parsing Markdown en HTML
+- Choix techniques :
+  - Moq pour simuler les handlers CQRS
+  - FluentAssertions pour des assertions lisibles
+  - Isolation des services pour les tests unitaires
+- Points clés testés :
+  - Conversion des données entre les couches
+  - Communication avec la couche Application
+  - Gestion des événements de mise à jour
+  - Traitement du contenu Markdown
+  - Gestion des erreurs et cas limites
+
+![Résultats des tests unitaires pour la couche Presentation](/assets/img/TaskBoard.BlazorServer.Tests.png "Résultats des tests unitaires pour la couche Presentation")
+
+### Étape 15 - Tests des composants Blazor avec bUnit (15/12/2024)
+
+La mise en place de tests pour les composants Blazor à l'aide de bUnit permet de vérifier le bon fonctionnement de l'interface utilisateur. Les tests du TaskDialog démontrent les aspects clés suivants :
+
+- Tests du rendu initial :
+  - Vérification de l'affichage correct du formulaire vide pour une nouvelle tâche
+  - Vérification de l'affichage des données existantes pour une tâche en édition
+  - Validation de l'état initial des champs du formulaire
+
+- Tests des interactions utilisateur :
+  - Simulation des saisies utilisateur dans les champs du formulaire
+  - Vérification du comportement lors de la soumission du formulaire
+  - Test des événements de fermeture du dialogue
+  - Validation des données avant soumission
+
+- Tests de validation :
+  - Vérification des messages d'erreur pour les champs requis
+  - Test des différents scénarios de validation (champs vides, espaces)
+  - Comportement du formulaire avec des données invalides
+
+- Choix techniques :
+  - Utilisation de bUnit pour le rendu des composants
+  - FluentAssertions pour des assertions lisibles
+  - Tests basés sur les scénarios d'utilisation réels
+  - Isolation des composants pour les tests unitaires
+
+- Points clés :
+  - Tests du cycle de vie complet des composants
+  - Vérification des interactions entre composants
+  - Test des événements et callbacks
+  - Couverture des différents états du composant
+
+Ces tests permettent d'assurer la qualité et la fiabilité de l'interface utilisateur en vérifiant automatiquement le bon fonctionnement des composants Blazor.
+
