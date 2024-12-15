@@ -155,3 +155,32 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
   - Intégrité des données lors des opérations CRUD
 
 ![Résultats des tests unitaires pour la couche Application](/assets/img/TaskBoard.Application.Tests.png "Résultats des tests unitaires pour la couche Application")
+
+
+### Étape 13 - Tests de la couche Infrastructure (15/12/2024)
+- Mise en place des tests utilisant SQLite en mémoire
+- Tests du Repository :
+  - Opérations CRUD complètes (Create, Read, Update, Delete)
+  - Filtrage des tâches par état
+  - Gestion des erreurs
+  - Tests de performance
+- Tests de la configuration du DbContext :
+  - Vérification des configurations des entités
+  - Tests des contraintes de la base de données
+  - Validation des clés primaires et des index
+- Tests des migrations :
+  - Vérification de la création de la base de données
+  - Validation du schéma de la base de données
+  - Tests des migrations automatiques
+- Choix techniques :
+  - Utilisation de SQLite en mémoire pour les tests
+  - Base de données propre pour chaque test
+  - Framework xUnit pour les tests
+  - FluentAssertions pour des assertions lisibles
+- Points clés testés :
+  - Isolation des tests
+  - Performance des requêtes
+  - Intégrité des données
+  - Gestion des contraintes de base de données
+
+![Résultats des tests unitaires pour la couche Infrastructure](/assets/img/TaskBoard.Infrastructure.Tests.png "Résultats des tests unitaires pour la couche Infrastructure")
