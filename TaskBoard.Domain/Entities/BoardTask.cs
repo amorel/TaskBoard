@@ -7,6 +7,14 @@ namespace TaskBoard.Domain.Entities
     /// </summary>
     public class BoardTask
     {
+        public BoardTask()
+        {
+            Id = Guid.NewGuid(); 
+            CreatedAt = DateTime.UtcNow;
+            LastModifiedAt = DateTime.UtcNow;
+            Status = TaskState.Todo; 
+        }
+
         public Guid Id { get; set; }
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
