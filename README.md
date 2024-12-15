@@ -117,3 +117,41 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
   - Moq : Pour la création de mocks
   - FluentAssertions : Pour des assertions plus lisibles
   - Convention AAA (Arrange-Act-Assert) pour la structure des tests
+
+### Étape 11 - Tests de la couche Domain (15/12/2024)
+- Mise en place des tests unitaires pour l'entité BoardTask
+- Tests des différents scénarios :
+  - Création avec valeurs par défaut
+  - Validation des propriétés
+  - Gestion des chaînes vides
+  - Gestion des identifiants
+  - Comportement des dates de création et modification
+- Choix techniques :
+  - Utilisation de xUnit comme framework de test
+  - FluentAssertions pour des assertions plus lisibles et expressives
+  - Tests basés sur le comportement attendu de l'entité
+
+![Résultats des tests unitaires pour la couche Domain](/assets/img/TaskBoard.Domain.Tests.png "Résultats des tests unitaires pour la couche Domain")
+
+### Étape 12 - Tests de la couche Application (15/12/2024)
+- Implémentation des tests pour tous les handlers CQRS
+- Tests des Queries :
+  - GetAllTasksQueryHandler
+  - GetTaskByIdQueryHandler
+  - GetTasksByStateQueryHandler
+- Tests des Commands :
+  - CreateTaskCommandHandler
+  - UpdateTaskCommandHandler
+  - DeleteTaskCommandHandler
+- Choix techniques :
+  - Utilisation de Moq pour simuler les dépendances
+  - Tests des cas normaux et des cas d'erreur
+  - Vérification des interactions avec le repository
+  - Couverture complète des scénarios d'utilisation
+- Points clés testés :
+  - Validation des données
+  - Gestion des erreurs
+  - Comportement des dates
+  - Intégrité des données lors des opérations CRUD
+
+![Résultats des tests unitaires pour la couche Application](/assets/img/TaskBoard.Application.Tests.png "Résultats des tests unitaires pour la couche Application")
