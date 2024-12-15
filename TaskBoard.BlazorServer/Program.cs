@@ -42,8 +42,31 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var folder = Path.GetDirectoryName(connectionString);
+
+    Console.WriteLine($"Connection string: {connectionString}");
+    Console.WriteLine($"Folder path: {folder}");
+
+    if (!string.IsNullOrEmpty(folder) && !Directory.Exists(folder))
+    {
+        try
+        {
+            Directory.CreateDirectory(folder);
+            Console.WriteLine($"Created directory: {folder}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating directory: {ex.Message}");
+        }
+    }
+
     app.UseExceptionHandler("/Error");
     app.UseHsts();
+}
+else
+{
+    app.UseDeveloperExceptionPage();
 }
 
 app.UseHttpsRedirection();

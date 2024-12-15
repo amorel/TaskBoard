@@ -17,14 +17,17 @@ namespace TaskBoard.BlazorServer.Services
 
         public async Task<string> GetReadmeContentAsync()
         {
-            var readmePath = Path.Combine(_environment.ContentRootPath, "..", "README.md");
+            var readmePath = Path.GetFullPath(Path.Combine(_environment.ContentRootPath, "..", "README.md"));
+
             if (!File.Exists(readmePath))
             {
                 return "README.md not found";
             }
 
+            Console.WriteLine($"Trying to read README.md from: {readmePath}");
+
             var markdown = await File.ReadAllTextAsync(readmePath);
-            
+
             // Configuration du pipeline Markdown
             var pipeline = new MarkdownPipelineBuilder()
                 .UseAdvancedExtensions()
