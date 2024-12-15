@@ -102,3 +102,18 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
   - Séparation claire entre les composants et les pages
   - Configuration des dépendances pour l'injection
   - Préparation de l'environnement de développement
+
+### Étape 10 - Mise en place des tests unitaires (15/12/2024)
+- Création de quatre projets de tests unitaires :
+  - TaskBoard.Domain.Tests : Tests de la couche domaine
+  - TaskBoard.Application.Tests : Tests de la couche application
+  - TaskBoard.Infrastructure.Tests : Tests de la couche infrastructure
+  - TaskBoard.BlazorServer.Tests : Tests de la couche présentation
+- Configuration des dépendances :
+  - Ajout des références aux projets principaux
+  - Installation des packages de test : xUnit, Moq, FluentAssertions
+- Choix techniques :
+  - xUnit : Framework de test moderne et flexible
+  - Moq : Pour la création de mocks
+  - FluentAssertions : Pour des assertions plus lisibles
+  - Convention AAA (Arrange-Act-Assert) pour la structure des tests
