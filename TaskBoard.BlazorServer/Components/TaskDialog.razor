@@ -1,0 +1,91 @@
+﻿@using TaskBoard.BlazorServer.ViewModels
+@using TaskBoard.Domain.Enums
+
+<div class="modal fade show" style="display: block;" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(Task == null ? "Nouvelle tâche" : "Modifier la tâche")</h5>
+                <button type="button" class="btn-close" @onclick="OnClose"></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="@_editTask" OnValidSubmit="HandleValidSubmit">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Titre</label>
+                        <InputText id="title" class="form-control" @bind-Value="_editTask.Title" />
+                        <ValidationMessage For="@(() => _editTask.Title)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <InputTextArea id="description" class="form-control" @bind-Value="_editTask.Description" />
+                        <ValidationMessage For="@(() => _editTask.Description)" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Statut</label>
+                        <InputSelect id="status" class="form-control" @bind-Value="_editTask.Status">
+                            <option value="@TaskState.Todo">À faire</option>
+                            <option value="@TaskState.InProgress">En cours</option>
+                            <option value="@TaskState.Done">Terminé</option>
+                        </InputSelect>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="OnClose">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade show"></div>
+
+@code {
+    [Parameter]
+    public TaskViewModel? Task { get; set; }
+
+    [Parameter]
+    public TaskState TaskState { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    [Parameter]
+    public EventCallback<TaskViewModel> OnSave { get; set; }
+
+    private TaskViewModel _editTask = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Task != null)
+        {
+            _editTask = new TaskViewModel
+                {
+                    Id = Task.Id,
+                    Title = Task.Title,
+                    Description = Task.Description,
+                    Status = Task.Status,
+                    CreatedAt = Task.CreatedAt,
+                    LastModifiedAt = DateTime.UtcNow
+                };
+        }
+        else
+        {
+            _editTask = new TaskViewModel
+                {
+                    Status = TaskState,
+                    CreatedAt = DateTime.UtcNow,
+                    LastModifiedAt = DateTime.UtcNow
+                };
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        await OnSave.InvokeAsync(_editTask);
+    }
+}

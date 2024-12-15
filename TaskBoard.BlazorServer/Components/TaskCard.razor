@@ -1,0 +1,71 @@
+﻿@using TaskBoard.BlazorServer.Services
+@using TaskBoard.BlazorServer.ViewModels
+@using TaskBoard.Domain.Enums
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">@Task.Title</h5>
+        <p class="card-text">@Task.Description</p>
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">@Task.LastModifiedAt.ToString("g")</small>
+            <div>
+                <button class="btn btn-sm btn-primary me-2" @onclick="() => OnEditClick()">
+                    Éditer
+                </button>
+                <button class="btn btn-sm btn-danger" @onclick="() => OnDeleteClick()">
+                    Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (_showEditDialog)
+{
+    <TaskDialog Task="Task" OnClose="CloseEditDialog" OnSave="UpdateTask" />
+}
+
+@code {
+    [Parameter]
+    public TaskViewModel Task { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnTaskUpdated { get; set; }
+
+    [Parameter]
+    public EventCallback OnTaskDeleted { get; set; }
+
+    [Inject]
+    private ITaskService TaskService { get; set; } = null!;
+
+    private bool _showEditDialog;
+
+    [Inject]
+    private IJSRuntime js { get; set; } = null!;
+
+    private void OnEditClick()
+    {
+        _showEditDialog = true;
+    }
+
+    private async Task OnDeleteClick()
+    {
+        if (await js.InvokeAsync<bool>("confirm", "Êtes-vous sûr de vouloir supprimer cette tâche ?"))
+        {
+            await TaskService.DeleteTaskAsync(Task.Id);
+            await OnTaskDeleted.InvokeAsync();
+        }
+    }
+
+    private void CloseEditDialog()
+    {
+        _showEditDialog = false;
+    }
+
+    private async Task UpdateTask(TaskViewModel updatedTask)
+    {
+        await TaskService.UpdateTaskAsync(updatedTask);
+        _showEditDialog = false;
+        await OnTaskUpdated.InvokeAsync();
+    }
+}

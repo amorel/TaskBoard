@@ -1,0 +1,34 @@
+<div class="survey-container">
+    <i class="oi oi-pencil me-2" aria-hidden="true"></i>
+    <a href="@Url" target="_blank" rel="noopener noreferrer">@Text</a> @AdditionalText
+</div>
+
+@code {
+    [Parameter]
+    public string Url { get; set; }
+
+    [Parameter]
+    public string Text { get; set; }
+
+    [Parameter]
+    public string AdditionalText { get; set; }
+}
+
+<style>
+    .survey-container {
+        background-color: #f0f0f0;
+        padding: 1rem;
+        border-radius: 4px;
+        margin-top: 1rem;
+    }
+
+    .survey-container a {
+        color: #333;
+        text-decoration: underline;
+        font-weight: bold;
+    }
+
+    .survey-container i {
+        margin-right: 0.5rem;
+    }
+</style>
