@@ -15,6 +15,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
+using TaskBoard.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,6 +81,22 @@ builder.Services.AddScoped<ICommandHandler<DeleteTaskCommand, Unit>, DeleteTaskC
 builder.Services.AddScoped<IReadmeService, ReadmeService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<TaskBoardDbContext>();
+    try
+    {
+        Console.WriteLine("Attempting to apply migrations...");
+        await db.Database.MigrateAsync();
+        Console.WriteLine("Migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred while applying migrations: {ex.Message}");
+        throw; // Relancer l'exception pour être sûr que l'app ne démarre pas sans BDD
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
