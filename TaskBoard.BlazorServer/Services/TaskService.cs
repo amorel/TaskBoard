@@ -12,6 +12,7 @@ using TaskBoard.Domain.Enums;
 
 namespace TaskBoard.BlazorServer.Services
 {
+    // TaskBoard.BlazorServer\Services\TaskService.cs
     public class TaskService : ITaskService
     {
         private readonly IQueryHandler<GetAllTasksQuery, IEnumerable<BoardTask>> _getAllTasksHandler;
@@ -61,7 +62,7 @@ namespace TaskBoard.BlazorServer.Services
         {
             var command = new CreateTaskCommand(viewModel.Title, viewModel.Description, viewModel.Status);
             var task = await _createTaskHandler.Handle(command, CancellationToken.None);
-            NotifyStateChanged();
+            OnChange?.Invoke();
             return MapToViewModel(task);
         }
 
@@ -69,14 +70,14 @@ namespace TaskBoard.BlazorServer.Services
         {
             var command = new UpdateTaskCommand(viewModel.Id, viewModel.Title, viewModel.Description, viewModel.Status);
             var task = await _updateTaskHandler.Handle(command, CancellationToken.None);
-            NotifyStateChanged();
+            OnChange?.Invoke();
             return MapToViewModel(task);
         }
 
         public async Task DeleteTaskAsync(Guid id)
         {
             await _deleteTaskHandler.Handle(new DeleteTaskCommand(id), CancellationToken.None);
-            NotifyStateChanged();
+            OnChange?.Invoke();
         }
 
         private static TaskViewModel MapToViewModel(BoardTask task)
@@ -91,7 +92,5 @@ namespace TaskBoard.BlazorServer.Services
                 LastModifiedAt = task.LastModifiedAt
             };
         }
-
-        private void NotifyStateChanged() => OnChange?.Invoke();
     }
 }

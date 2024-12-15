@@ -201,8 +201,6 @@ Ce projet est un tableau de bord collaboratif en temps réel développé avec Bl
   - Traitement du contenu Markdown
   - Gestion des erreurs et cas limites
 
-![Résultats des tests unitaires pour la couche Presentation](/assets/img/TaskBoard.BlazorServer.Tests.png "Résultats des tests unitaires pour la couche Presentation")
-
 ### Étape 15 - Tests des composants Blazor avec bUnit (15/12/2024)
 
 La mise en place de tests pour les composants Blazor à l'aide de bUnit permet de vérifier le bon fonctionnement de l'interface utilisateur. Les tests du TaskDialog démontrent les aspects clés suivants :
@@ -237,3 +235,28 @@ La mise en place de tests pour les composants Blazor à l'aide de bUnit permet d
 
 Ces tests permettent d'assurer la qualité et la fiabilité de l'interface utilisateur en vérifiant automatiquement le bon fonctionnement des composants Blazor.
 
+### Étape 16 - Tests des pages Blazor avec bUnit (15/12/2024)
+La mise en place de tests pour les pages Blazor avec bUnit permet de vérifier l'intégration des composants et le comportement global de l'application. Les tests de la page TaskBoard démontrent les aspects clés suivants :
+
+- Tests du rendu de la structure de la page :
+  - Vérification de l'affichage des trois colonnes (À faire, En cours, Terminé)
+  - Validation de l'affichage des cartes de tâches dans les bonnes colonnes
+  - Test de l'affichage des boutons d'ajout pour chaque colonne
+
+- Tests des interactions avec le service de tâches :
+  - Vérification de la récupération initiale des tâches
+  - Test de l'ajout d'une nouvelle tâche
+  - Validation de la mise à jour en temps réel
+  - Test de la suppression d'une tâche
+
+- Tests de l'organisation des tâches :
+  - Vérification du tri des tâches dans chaque colonne
+  - Test de l'affichage correct des détails des tâches
+  - Validation de la répartition des tâches par état
+  
+- Tests des mises à jour en temps réel :
+  - Test du rafraîchissement automatique lors de modifications
+  - Vérification de la synchronisation entre les colonnes
+  - Validation des événements de mise à jour
+
+![Résultats des tests unitaires pour la couche Presentation](/assets/img/TaskBoard.BlazorServer.Tests.png "Résultats des tests unitaires pour la couche Presentation")

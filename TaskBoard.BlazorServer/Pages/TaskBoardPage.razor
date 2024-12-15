@@ -91,7 +91,7 @@
     protected override async Task OnInitializedAsync()
     {
         await RefreshTasks();
-        TaskService.OnChange += StateHasChanged;
+        TaskService.OnChange += async () => await RefreshTasks();
     }
 
     private async Task RefreshTasks()

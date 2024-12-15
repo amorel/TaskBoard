@@ -53,7 +53,7 @@ namespace TaskBoard.BlazorServer.Tests.Components
 
             // Act
             var deleteButton = cut.Find("button.btn-danger");
-            await deleteButton.ClickAsync(new MouseEventArgs()); // Ajout des MouseEventArgs
+            await deleteButton.ClickAsync(new MouseEventArgs());
 
             // Assert
             _mockTaskService.Verify(s => s.DeleteTaskAsync(_testTask.Id), Times.Once);
@@ -89,7 +89,7 @@ namespace TaskBoard.BlazorServer.Tests.Components
 
             // Act
             var editButton = cut.Find("button.btn-primary");
-            editButton.Click(new MouseEventArgs()); // Ajout des MouseEventArgs
+            editButton.Click(new MouseEventArgs());
 
             // Assert
             cut.FindComponent<TaskDialog>().Should().NotBeNull();
