@@ -5,8 +5,8 @@
 @inject ITaskService TaskService
 @inject IJSRuntime JS
 
-<div class="card task-column">
-    <div class="@TaskColumnStyles.GetHeaderClass(State)">
+<div class="card task-column" data-column="@State.ToString()">
+    <div class="card-header">
         <h5 class="card-title mb-0">@Title</h5>
     </div>
     <div class="card-body dropzone @GetDropzoneClass()" @ref="dropZoneElement" ondragover="event.preventDefault();"
@@ -30,7 +30,6 @@
     private ElementReference dropZoneElement;
     private bool _isDragOver = false;
     private int _dragCounter = 0;
-    private TaskViewModel? _draggedTask;
 
     [Parameter]
     public string Title { get; set; } = string.Empty;
@@ -103,9 +102,9 @@
         }
     }
 
-    private async Task HandleTaskDragStart(TaskViewModel task)
+    private async Task HandleDragStart(TaskViewModel task)
     {
-        _draggedTask = task;
+        await JS.InvokeVoidAsync("taskboardInterop.setDragData", task.Id.ToString());
     }
 
     private async Task HandleDrop()
@@ -135,24 +134,25 @@
         if (Tasks != null)
         {
             Logger.LogInformation($"Number of tasks in collection: {Tasks.Count()}");
-        
-        // Listons toutes les tâches et leurs IDs
-        foreach (var task in Tasks)
-        {
-            Logger.LogInformation($"Task in collection: ID={task.Id}, Title={task.Title}, Status={task.Status}");
-        }
-        var draggedTask = await TaskService.GetTaskByIdAsync(parsedTaskId);
-        if (draggedTask != null && draggedTask.Status != State)
-        {
-            Logger.LogInformation($"Sending task with original status: {draggedTask.Status}");
-            await OnTaskMoved.InvokeAsync((draggedTask, State));
-        } else
-        {
-            Logger.LogInformation("draggedTask is null");
-        }
-    }
 
-    // Force le rafraîchissement de l'interface
-    StateHasChanged();
+            // Listons toutes les tâches et leurs IDs
+            foreach (var task in Tasks)
+            {
+                Logger.LogInformation($"Task in collection: ID={task.Id}, Title={task.Title}, Status={task.Status}");
+            }
+            var draggedTask = await TaskService.GetTaskByIdAsync(parsedTaskId);
+            if (draggedTask != null && draggedTask.Status != State)
+            {
+                Logger.LogInformation($"Sending task with original status: {draggedTask.Status}");
+                await OnTaskMoved.InvokeAsync((draggedTask, State));
+            }
+            else
+            {
+                Logger.LogInformation("draggedTask is null");
+            }
+        }
+
+        // Force le rafraîchissement de l'interface
+        StateHasChanged();
     }
 }

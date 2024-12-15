@@ -1,0 +1,16 @@
+{
+  "name": "taskboard.blazorserver",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build-sass": "sass TaskBoard.BlazorServer/Styles/site.scss:TaskBoard.BlazorServer/wwwroot/css/site.css --style compressed",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "sass": "^1.83.0"
+  }
+}

@@ -27,20 +27,44 @@ namespace TaskBoard.BlazorServer.Tests.Pages
             Services.AddSingleton(_mockTaskService.Object);
 
             _todoTasks = new List<TaskViewModel>
-        {
-            new() { Id = Guid.NewGuid(), Title = "Todo Task 1", Status = TaskState.Todo },
-            new() { Id = Guid.NewGuid(), Title = "Todo Task 2", Status = TaskState.Todo }
-        };
+            {
+                new() {
+                    Id = Guid.NewGuid(),
+                    Title = "Todo Task 1",
+                    Status = TaskState.Todo,
+                    CreatedAt = DateTime.UtcNow,
+                    LastModifiedAt = DateTime.UtcNow
+                },
+                new() {
+                    Id = Guid.NewGuid(),
+                    Title = "Todo Task 2",
+                    Status = TaskState.Todo,
+                    CreatedAt = DateTime.UtcNow,
+                    LastModifiedAt = DateTime.UtcNow
+                }
+            };
 
             _inProgressTasks = new List<TaskViewModel>
-        {
-            new() { Id = Guid.NewGuid(), Title = "In Progress Task", Status = TaskState.InProgress }
-        };
+            {
+                new() {
+                    Id = Guid.NewGuid(),
+                    Title = "In Progress Task",
+                    Status = TaskState.InProgress,
+                    CreatedAt = DateTime.UtcNow,
+                    LastModifiedAt = DateTime.UtcNow
+                }
+            };
 
             _doneTasks = new List<TaskViewModel>
-        {
-            new() { Id = Guid.NewGuid(), Title = "Done Task", Status = TaskState.Done }
-        };
+            {
+                new() {
+                    Id = Guid.NewGuid(),
+                    Title = "Done Task",
+                    Status = TaskState.Done,
+                    CreatedAt = DateTime.UtcNow,
+                    LastModifiedAt = DateTime.UtcNow
+                }
+            };
 
             _mockTaskService
                 .Setup(s => s.GetTasksByStateAsync(TaskState.Todo))
@@ -62,7 +86,7 @@ namespace TaskBoard.BlazorServer.Tests.Pages
             var cut = RenderComponent<TaskBoardPage>();
 
             // Assert
-            var columns = cut.FindAll(".card > .card-header").Count;
+            var columns = cut.FindAll(".card-header").Count;
             columns.Should().Be(3); // Three columns
 
             var taskCards = cut.FindComponents<TaskCard>();
@@ -102,19 +126,24 @@ namespace TaskBoard.BlazorServer.Tests.Pages
         }
 
         [Fact]
-        public void TaskBoardPage_ShouldRenderCorrectTasksInEachColumn()
+        public async Task TaskBoardPage_ShouldRenderCorrectTasksInEachColumn()
         {
             // Act
             var cut = RenderComponent<TaskBoardPage>();
+            await cut.InvokeAsync(() => Task.CompletedTask);
 
             // Assert
-            var todoColumn = cut.Find("div:has(> .card-header:contains('À faire'))");
-            var inProgressColumn = cut.Find("div:has(> .card-header:contains('En cours'))");
-            var doneColumn = cut.Find("div:has(> .card-header:contains('Terminé'))");
+            var todoColumn = TestHelpers.FindColumnByState(cut, TaskState.Todo);
+            var inProgressColumn = TestHelpers.FindColumnByState(cut, TaskState.InProgress);
+            var doneColumn = TestHelpers.FindColumnByState(cut, TaskState.Done);
 
-            todoColumn.QuerySelectorAll(".card-body > .card").Length.Should().Be(2);
-            inProgressColumn.QuerySelectorAll(".card-body > .card").Length.Should().Be(1);
-            doneColumn.QuerySelectorAll(".card-body > .card").Length.Should().Be(1);
+            var todoTasks = TestHelpers.GetTasksInColumn(todoColumn);
+            var inProgressTasks = TestHelpers.GetTasksInColumn(inProgressColumn);
+            var doneTasks = TestHelpers.GetTasksInColumn(doneColumn);
+
+            todoTasks.Length.Should().Be(2);
+            inProgressTasks.Length.Should().Be(1);
+            doneTasks.Length.Should().Be(1);
         }
 
         [Fact]
@@ -133,6 +162,7 @@ namespace TaskBoard.BlazorServer.Tests.Pages
                 .ReturnsAsync((TaskState state) => taskLists[state]);
 
             var cut = RenderComponent<TaskBoardPage>();
+            await cut.InvokeAsync(() => Task.CompletedTask);
 
             // Modifier les listes de tâches
             taskLists[TaskState.Todo].Add(new TaskViewModel { Title = "New Todo" });
@@ -150,18 +180,16 @@ namespace TaskBoard.BlazorServer.Tests.Pages
             cut.Render();
 
             // Assert
-            var todoTasks = cut.FindAll("div:has(> .card-header:contains('À faire')) .card-body > .card");
-            var inProgressTasks = cut.FindAll("div:has(> .card-header:contains('En cours')) .card-body > .card");
-            var doneTasks = cut.FindAll("div:has(> .card-header:contains('Terminé')) .card-body > .card");
+            var todoTasks = cut.Find("[data-column='Todo']").QuerySelectorAll(".task-card");
+            var inProgressTasks = cut.Find("[data-column='InProgress']").QuerySelectorAll(".task-card");
+            var doneTasks = cut.Find("[data-column='Done']").QuerySelectorAll(".task-card");
 
-            todoTasks.Count.Should().Be(2);
-            inProgressTasks.Count.Should().Be(2);
-            doneTasks.Count.Should().Be(2);
+            todoTasks.Length.Should().Be(2);
+            inProgressTasks.Length.Should().Be(2);
+            doneTasks.Length.Should().Be(2);
 
-            _mockTaskService.Verify(s => s.GetTasksByStateAsync(It.IsAny<TaskState>()), Times.AtLeast(6)); // 3 initial + 3 after change
+            _mockTaskService.Verify(s => s.GetTasksByStateAsync(It.IsAny<TaskState>()), Times.AtLeast(6));
         }
-
-
 
         [Fact]
         public async Task CreateTask_ShouldShowDialogAndCreateTask()
@@ -192,6 +220,19 @@ namespace TaskBoard.BlazorServer.Tests.Pages
             var taskDialog = cut.FindComponent<TaskDialog>();
             taskDialog.Should().NotBeNull();
             taskDialog.Instance.TaskState.Should().Be(TaskState.Todo);
+        }
+
+        private static class TestHelpers
+        {
+            public static IElement FindColumnByState(IRenderedFragment cut, TaskState state)
+            {
+                return cut.Find($"[data-column='{state}']");
+            }
+
+            public static IHtmlCollection<IElement> GetTasksInColumn(IElement column)
+            {
+                return column.QuerySelectorAll(".task-card");
+            }
         }
     }
 }

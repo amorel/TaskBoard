@@ -7,12 +7,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNetCore.SassCompiler" Version="1.69.5" />
     <PackageReference Include="Markdig" Version="0.35.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
+
+  <PropertyGroup>
+    <SassCompilerEnabled>true</SassCompilerEnabled>
+    <SassCompilerWorkingDirectory>$(MSBuildProjectDirectory)</SassCompilerWorkingDirectory>
+    <SassCompilerInputDirectory>Styles</SassCompilerInputDirectory>
+    <SassCompilerOutputDirectory>wwwroot/css</SassCompilerOutputDirectory>
+    <SassCompilerOutputStyle>Compressed</SassCompilerOutputStyle>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TaskBoard.Domain\TaskBoard.Domain.csproj" />
