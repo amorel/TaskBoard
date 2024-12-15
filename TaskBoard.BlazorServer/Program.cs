@@ -33,6 +33,8 @@ builder.Services.AddScoped<ICommandHandler<CreateTaskCommand, BoardTask>, Create
 builder.Services.AddScoped<ICommandHandler<UpdateTaskCommand, BoardTask>, UpdateTaskCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<DeleteTaskCommand, Unit>, DeleteTaskCommandHandler>();
 
+builder.Services.AddScoped<IReadmeService, ReadmeService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

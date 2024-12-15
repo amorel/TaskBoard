@@ -1,6 +1,8 @@
 ﻿@page "/"
+@using TaskBoard.BlazorServer.Services
+@inject IReadmeService ReadmeService
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Présentation</PageTitle>
 
 <h1>Blazor Demo Project</h1>
 
@@ -8,4 +10,50 @@ Ceci est la démonstration d'un projet fait avec Blazor, c'est un tableau de bor
 
 <CustomLink 
     Url="https://github.com/amorel/TaskBoard" 
-    Text="Pour consulter le projet directement dans Github" />
+    Text="Pour consulter le projet directement dans Github"
+    AdditionalText="(https://github.com/amorel/TaskBoard)" />
+
+<PageTitle>TaskBoard - Documentation</PageTitle>
+
+<div class="readme-content">
+    @if (_readmeContent != null)
+    {
+        @((MarkupString)_readmeContent)
+    }
+    else
+    {
+        <p>Chargement...</p>
+    }
+</div>
+
+<style>
+    .readme-content {
+        max-width: 1200px;
+        padding: 20px;
+    }
+
+    .readme-content h1 {
+        border-bottom: 1px solid #eaecef;
+        padding-bottom: 0.3em;
+    }
+
+    .readme-content h2 {
+        border-bottom: 1px solid #eaecef;
+        padding-bottom: 0.3em;
+        margin-top: 24px;
+    }
+
+    .readme-content p {
+        margin-bottom: 16px;
+        line-height: 1.6;
+    }
+</style>
+
+@code {
+    private string? _readmeContent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _readmeContent = await ReadmeService.GetReadmeContentAsync();
+    }
+}
