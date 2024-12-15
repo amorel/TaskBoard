@@ -1,7 +1,9 @@
 ﻿@page "/taskboard"
+@using Microsoft.Extensions.Logging
 @using TaskBoard.BlazorServer.Services
 @using TaskBoard.BlazorServer.ViewModels
 @using TaskBoard.Domain.Enums
+@inject ILogger<TaskBoardPage> Logger
 @inject ITaskService TaskService
 
 <div class="container-fluid">
@@ -80,6 +82,7 @@
     {
         if (moveData.Task != null && moveData.Task.Status != moveData.NewState)
         {
+            Logger.LogInformation($"Moving task: {moveData.Task.Title} from {moveData.Task.Status} to {moveData.NewState}");
             var updatedTask = new TaskViewModel
                 {
                     Id = moveData.Task.Id,
@@ -90,8 +93,18 @@
                     LastModifiedAt = DateTime.UtcNow
                 };
 
-            await TaskService.UpdateTaskAsync(updatedTask);
-            await RefreshTasks();
+            try
+            {
+                await TaskService.UpdateTaskAsync(updatedTask);
+                Logger.LogInformation("Task updated successfully");
+                await RefreshTasks();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error updating task: {ex.Message}");
+                Console.WriteLine($"Error updating task: {ex.Message}");
+            }
         }
     }
 

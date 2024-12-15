@@ -1,14 +1,16 @@
 @using TaskBoard.BlazorServer.ViewModels
 @using TaskBoard.Domain.Enums
 @using TaskBoard.BlazorServer.Constants
+@inject ILogger<TaskColumn> Logger
+@inject ITaskService TaskService
 @inject IJSRuntime JS
 
 <div class="card task-column">
     <div class="@TaskColumnStyles.GetHeaderClass(State)">
         <h5 class="card-title mb-0">@Title</h5>
     </div>
-    <div class="card-body dropzone @GetDropzoneClass()" ondragover="event.preventDefault();" @ondrop="HandleDrop"
-        @ondragenter="HandleDragEnter" @ondragleave="HandleDragLeave">
+    <div class="card-body dropzone @GetDropzoneClass()" @ref="dropZoneElement" ondragover="event.preventDefault();"
+        @ondragenter="OnDragEnter" @ondragleave="OnDragLeave" @ondrop="HandleDrop">
         @if (Tasks != null)
         {
             @foreach (var task in Tasks)
@@ -25,7 +27,9 @@
 </div>
 
 @code {
+    private ElementReference dropZoneElement;
     private bool _isDragOver = false;
+    private int _dragCounter = 0;
     private TaskViewModel? _draggedTask;
 
     [Parameter]
@@ -49,20 +53,54 @@
     [Parameter]
     public EventCallback<(TaskViewModel Task, TaskState NewState)> OnTaskMoved { get; set; }
 
+    private void OnDragEnter(DragEventArgs e)
+    {
+        _dragCounter++;
+        if (_dragCounter == 1)
+        {
+            _isDragOver = true;
+        }
+    }
+
+    private void OnDragLeave(DragEventArgs e)
+    {
+        _dragCounter--;
+        if (_dragCounter == 0)
+        {
+            _isDragOver = false;
+        }
+    }
+
     private string GetDropzoneClass()
     {
         if (!_isDragOver) return "";
-        return _draggedTask?.Status == State ? "cannot-drop" : "can-drop";
+        return "can-drop";
     }
 
-    private void HandleDragEnter()
+    private async Task HandleDragEnter()
     {
-        _isDragOver = true;
+        var shouldUpdate = await JS.InvokeAsync<bool>(
+        "taskboardInterop.handleColumnDragEnter",
+        dropZoneElement
+        );
+
+        if (shouldUpdate)
+        {
+            _isDragOver = true;
+        }
     }
 
-    private void HandleDragLeave()
+    private async Task HandleDragLeave()
     {
-        _isDragOver = false;
+        var shouldUpdate = await JS.InvokeAsync<bool>(
+        "taskboardInterop.handleColumnDragLeave",
+        dropZoneElement
+        );
+
+        if (shouldUpdate)
+        {
+            _isDragOver = false;
+        }
     }
 
     private async Task HandleTaskDragStart(TaskViewModel task)
@@ -72,12 +110,49 @@
 
     private async Task HandleDrop()
     {
+        Logger.LogInformation("=== HandleDrop Started ===");
+        _dragCounter = 0;
         _isDragOver = false;
 
-        if (_draggedTask != null && _draggedTask.Status != State)
+        var taskId = await JS.InvokeAsync<string>("taskboardInterop.getDragData");
+        Logger.LogInformation($"Dropped Task ID: {taskId}");
+        if (string.IsNullOrEmpty(taskId))
         {
-            await OnTaskMoved.InvokeAsync((_draggedTask, State));
-            _draggedTask = null;
+            Logger.LogWarning("Task ID is null or empty");
+            return;
         }
+
+        var rawId = taskId.Replace("task-", "");
+
+        if (!Guid.TryParse(rawId, out var parsedTaskId))
+        {
+            Logger.LogWarning($"Could not parse task ID: {rawId}");
+            return;
+        }
+
+        Logger.LogInformation($"Parsed Task ID: {parsedTaskId}");
+
+        if (Tasks != null)
+        {
+            Logger.LogInformation($"Number of tasks in collection: {Tasks.Count()}");
+        
+        // Listons toutes les tâches et leurs IDs
+        foreach (var task in Tasks)
+        {
+            Logger.LogInformation($"Task in collection: ID={task.Id}, Title={task.Title}, Status={task.Status}");
+        }
+        var draggedTask = await TaskService.GetTaskByIdAsync(parsedTaskId);
+        if (draggedTask != null && draggedTask.Status != State)
+        {
+            Logger.LogInformation($"Sending task with original status: {draggedTask.Status}");
+            await OnTaskMoved.InvokeAsync((draggedTask, State));
+        } else
+        {
+            Logger.LogInformation("draggedTask is null");
+        }
+    }
+
+    // Force le rafraîchissement de l'interface
+    StateHasChanged();
     }
 }

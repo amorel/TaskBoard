@@ -49,7 +49,7 @@
 
     private async Task HandleDragStart()
     {
-        Logger.LogInformation("Drag Start detected");
+        Logger.LogInformation($"Starting drag for task {BoardTask.Id}");
         await JS.InvokeVoidAsync("taskboardInterop.setDragData", BoardTask.Id.ToString());
     }
 
