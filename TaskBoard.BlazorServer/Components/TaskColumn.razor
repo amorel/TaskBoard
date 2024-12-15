@@ -1,0 +1,83 @@
+@using TaskBoard.BlazorServer.ViewModels
+@using TaskBoard.Domain.Enums
+@using TaskBoard.BlazorServer.Constants
+@inject IJSRuntime JS
+
+<div class="card task-column">
+    <div class="@TaskColumnStyles.GetHeaderClass(State)">
+        <h5 class="card-title mb-0">@Title</h5>
+    </div>
+    <div class="card-body dropzone @GetDropzoneClass()" ondragover="event.preventDefault();" @ondrop="HandleDrop"
+        @ondragenter="HandleDragEnter" @ondragleave="HandleDragLeave">
+        @if (Tasks != null)
+        {
+            @foreach (var task in Tasks)
+            {
+                <TaskCard BoardTask="task" OnTaskUpdated="OnTaskUpdated" OnTaskDeleted="OnTaskDeleted" IsDraggable="true" />
+            }
+        }
+    </div>
+    <div class="card-footer">
+        <button class="btn btn-primary" @onclick="() => OnAddTask.InvokeAsync(State)">
+            + Ajouter une tâche
+        </button>
+    </div>
+</div>
+
+@code {
+    private bool _isDragOver = false;
+    private TaskViewModel? _draggedTask;
+
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public TaskState State { get; set; }
+
+    [Parameter]
+    public IEnumerable<TaskViewModel>? Tasks { get; set; }
+
+    [Parameter]
+    public EventCallback OnTaskUpdated { get; set; }
+
+    [Parameter]
+    public EventCallback OnTaskDeleted { get; set; }
+
+    [Parameter]
+    public EventCallback<TaskState> OnAddTask { get; set; }
+
+    [Parameter]
+    public EventCallback<(TaskViewModel Task, TaskState NewState)> OnTaskMoved { get; set; }
+
+    private string GetDropzoneClass()
+    {
+        if (!_isDragOver) return "";
+        return _draggedTask?.Status == State ? "cannot-drop" : "can-drop";
+    }
+
+    private void HandleDragEnter()
+    {
+        _isDragOver = true;
+    }
+
+    private void HandleDragLeave()
+    {
+        _isDragOver = false;
+    }
+
+    private async Task HandleTaskDragStart(TaskViewModel task)
+    {
+        _draggedTask = task;
+    }
+
+    private async Task HandleDrop()
+    {
+        _isDragOver = false;
+
+        if (_draggedTask != null && _draggedTask.Status != State)
+        {
+            await OnTaskMoved.InvokeAsync((_draggedTask, State));
+            _draggedTask = null;
+        }
+    }
+}

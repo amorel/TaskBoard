@@ -48,7 +48,7 @@ namespace TaskBoard.BlazorServer.Tests.Components
 
             var onTaskDeletedCalled = false;
             var cut = RenderComponent<TaskCard>(parameters => parameters
-                .Add(p => p.Task, _testTask)
+                .Add(p => p.BoardTask, _testTask)
                 .Add(p => p.OnTaskDeleted, EventCallback.Factory.Create(this, () => onTaskDeletedCalled = true)));
 
             // Act
@@ -69,7 +69,7 @@ namespace TaskBoard.BlazorServer.Tests.Components
                 .ReturnsAsync(false);  // Important : retourne false
 
             var cut = RenderComponent<TaskCard>(parameters => parameters
-                .Add(p => p.Task, _testTask));
+                .Add(p => p.BoardTask, _testTask));
 
             // Act
             var deleteButton = cut.Find("button.btn-danger");
@@ -85,7 +85,7 @@ namespace TaskBoard.BlazorServer.Tests.Components
         {
             // Arrange & Act
             var cut = RenderComponent<TaskCard>(parameters => parameters
-                .Add(p => p.Task, _testTask));
+                .Add(p => p.BoardTask, _testTask));
 
             // Act
             var editButton = cut.Find("button.btn-primary");
@@ -100,7 +100,7 @@ namespace TaskBoard.BlazorServer.Tests.Components
         {
             // Arrange & Act
             var cut = RenderComponent<TaskCard>(parameters => parameters
-                .Add(p => p.Task, _testTask));
+                .Add(p => p.BoardTask, _testTask));
 
             // Assert
             cut.Find(".card-title").TextContent.Should().Be(_testTask.Title);
@@ -112,7 +112,7 @@ namespace TaskBoard.BlazorServer.Tests.Components
         {
             // Arrange & Act
             var cut = RenderComponent<TaskCard>(parameters => parameters
-                .Add(p => p.Task, _testTask));
+                .Add(p => p.BoardTask, _testTask));
 
             // Assert
             cut.FindAll("button").Count.Should().Be(2); // Edit et Delete

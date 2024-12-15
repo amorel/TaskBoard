@@ -1,13 +1,14 @@
-﻿@using TaskBoard.BlazorServer.Services
-@using TaskBoard.BlazorServer.ViewModels
+﻿@using TaskBoard.BlazorServer.ViewModels
 @using TaskBoard.Domain.Enums
+@inject ILogger<TaskCard> Logger
 
-<div class="card mb-3">
+<div class="card mb-3 task-card" draggable="true" @ondragstart="HandleDragStart" @ondragend="HandleDragEnd"
+    @onclick="HandleClick" id="@($"task-{BoardTask.Id}")">
     <div class="card-body">
-        <h5 class="card-title">@Task.Title</h5>
-        <p class="card-text">@Task.Description</p>
+        <h5 class="card-title">@BoardTask.Title</h5>
+        <p class="card-text">@BoardTask.Description</p>
         <div class="d-flex justify-content-between align-items-center">
-            <small class="text-muted">@Task.LastModifiedAt.ToString("g")</small>
+            <small class="text-muted">@BoardTask.LastModifiedAt.ToString("g")</small>
             <div>
                 <button class="btn btn-sm btn-primary me-2" @onclick="() => OnEditClick()">
                     Éditer
@@ -22,12 +23,17 @@
 
 @if (_showEditDialog)
 {
-    <TaskDialog Task="Task" OnClose="CloseEditDialog" OnSave="UpdateTask" />
+    <TaskDialog Task="BoardTask" OnClose="CloseEditDialog" OnSave="UpdateTask" />
 }
 
 @code {
+    private bool _showEditDialog;
+
+    [Parameter, EditorRequired]
+    public TaskViewModel BoardTask { get; set; } = null!;
+
     [Parameter]
-    public TaskViewModel Task { get; set; } = null!;
+    public bool IsDraggable { get; set; }
 
     [Parameter]
     public EventCallback OnTaskUpdated { get; set; }
@@ -36,12 +42,28 @@
     public EventCallback OnTaskDeleted { get; set; }
 
     [Inject]
-    private ITaskService TaskService { get; set; } = null!;
-
-    private bool _showEditDialog;
+    private IJSRuntime JS { get; set; } = null!;
 
     [Inject]
-    private IJSRuntime js { get; set; } = null!;
+    private ITaskService TaskService { get; set; } = null!;
+
+    private async Task HandleDragStart()
+    {
+        Logger.LogInformation("Drag Start detected");
+        await JS.InvokeVoidAsync("taskboardInterop.setDragData", BoardTask.Id.ToString());
+    }
+
+    private void HandleDragEnd()
+    {
+        Logger.LogInformation("End");
+        // La classe est gérée par le JavaScript
+    }
+
+    private void HandleClick()
+    {
+        Logger.LogInformation("Draggable: {Draggable}", IsDraggable);
+        Console.WriteLine($"Draggable: {IsDraggable}");
+    }
 
     private void OnEditClick()
     {
@@ -50,9 +72,9 @@
 
     private async Task OnDeleteClick()
     {
-        if (await js.InvokeAsync<bool>("confirm", "Êtes-vous sûr de vouloir supprimer cette tâche ?"))
+        if (await JS.InvokeAsync<bool>("confirm", "Êtes-vous sûr de vouloir supprimer cette tâche ?"))
         {
-            await TaskService.DeleteTaskAsync(Task.Id);
+            await TaskService.DeleteTaskAsync(BoardTask.Id);
             await OnTaskDeleted.InvokeAsync();
         }
     }
@@ -62,9 +84,9 @@
         _showEditDialog = false;
     }
 
-    private async Task UpdateTask(TaskViewModel updatedTask)
+    private async Task UpdateTask(TaskViewModel task)
     {
-        await TaskService.UpdateTaskAsync(updatedTask);
+        await TaskService.UpdateTaskAsync(task);
         _showEditDialog = false;
         await OnTaskUpdated.InvokeAsync();
     }

@@ -260,3 +260,23 @@ La mise en place de tests pour les pages Blazor avec bUnit permet de vérifier l
   - Validation des événements de mise à jour
 
 ![Résultats des tests unitaires pour la couche Presentation](/assets/img/TaskBoard.BlazorServer.Tests.png "Résultats des tests unitaires pour la couche Presentation")
+
+
+### Étape 17 - Refactorisation en composants et Drag & Drop (16/12/2024)
+
+- Création des composants dédiés :
+  - TaskColumn pour gérer les colonnes individuelles
+  - Amélioration du TaskCard pour le drag & drop
+  - Styles CSS modulaires pour les animations
+
+- Choix techniques :
+  - Composants réutilisables pour la maintenabilité
+  - Drag & drop natif HTML5 pour les performances
+  - JavaScript minimal pour le support cross-browser
+
+- Améliorations :
+  - Feedback visuel pendant le drag & drop
+  - Animations fluides pour les déplacements
+  - Validation visuelle des zones de drop
+
+Cette refactorisation améliore l'expérience utilisateur tout en rendant le code plus maintenable et extensible.

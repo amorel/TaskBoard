@@ -12,6 +12,8 @@ using TaskBoard.Application.Common.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+Console.WriteLine("Application starting...");
+
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();

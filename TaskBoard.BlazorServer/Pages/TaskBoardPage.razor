@@ -9,69 +9,19 @@
 
     <div class="row">
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="card-title mb-0">À faire</h5>
-                </div>
-                <div class="card-body">
-                    @if (_todoTasks != null)
-                    {
-                        @foreach (var task in _todoTasks)
-                        {
-                            <TaskCard Task="task" OnTaskUpdated="RefreshTasks" OnTaskDeleted="RefreshTasks" />
-                        }
-                    }
-                </div>
-                <div class="card-footer">
-                    <button class="btn btn-primary" @onclick="() => OpenCreateDialog(TaskState.Todo)">
-                        + Ajouter une tâche
-                    </button>
-                </div>
-            </div>
+            <TaskColumn Title="À faire" State="TaskState.Todo" Tasks="_todoTasks" OnTaskUpdated="RefreshTasks"
+                OnTaskDeleted="RefreshTasks" OnAddTask="OpenCreateDialog" OnTaskMoved="HandleTaskMoved" />
         </div>
 
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="card-title mb-0">En cours</h5>
-                </div>
-                <div class="card-body">
-                    @if (_inProgressTasks != null)
-                    {
-                        @foreach (var task in _inProgressTasks)
-                        {
-                            <TaskCard Task="task" OnTaskUpdated="RefreshTasks" OnTaskDeleted="RefreshTasks" />
-                        }
-                    }
-                </div>
-                <div class="card-footer">
-                    <button class="btn btn-primary" @onclick="() => OpenCreateDialog(TaskState.InProgress)">
-                        + Ajouter une tâche
-                    </button>
-                </div>
-            </div>
+            <TaskColumn Title="En cours" State="TaskState.InProgress" Tasks="_inProgressTasks"
+                OnTaskUpdated="RefreshTasks" OnTaskDeleted="RefreshTasks" OnAddTask="OpenCreateDialog"
+                OnTaskMoved="HandleTaskMoved" />
         </div>
 
         <div class="col-md-4">
-            <div class="card">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">Terminé</h5>
-                </div>
-                <div class="card-body">
-                    @if (_doneTasks != null)
-                    {
-                        @foreach (var task in _doneTasks)
-                        {
-                            <TaskCard Task="task" OnTaskUpdated="RefreshTasks" OnTaskDeleted="RefreshTasks" />
-                        }
-                    }
-                </div>
-                <div class="card-footer">
-                    <button class="btn btn-primary" @onclick="() => OpenCreateDialog(TaskState.Done)">
-                        + Ajouter une tâche
-                    </button>
-                </div>
-            </div>
+            <TaskColumn Title="Terminé" State="TaskState.Done" Tasks="_doneTasks" OnTaskUpdated="RefreshTasks"
+                OnTaskDeleted="RefreshTasks" OnAddTask="OpenCreateDialog" OnTaskMoved="HandleTaskMoved" />
         </div>
     </div>
 </div>
@@ -82,6 +32,7 @@
 }
 
 @code {
+    private TaskViewModel? _draggedTask;
     private List<TaskViewModel>? _todoTasks;
     private List<TaskViewModel>? _inProgressTasks;
     private List<TaskViewModel>? _doneTasks;
@@ -118,6 +69,30 @@
         await TaskService.CreateTaskAsync(task);
         _showCreateDialog = false;
         await RefreshTasks();
+    }
+
+    private void HandleDragStart(TaskViewModel task)
+    {
+        _draggedTask = task;
+    }
+
+    private async Task HandleTaskMoved((TaskViewModel Task, TaskState NewState) moveData)
+    {
+        if (moveData.Task != null && moveData.Task.Status != moveData.NewState)
+        {
+            var updatedTask = new TaskViewModel
+                {
+                    Id = moveData.Task.Id,
+                    Title = moveData.Task.Title,
+                    Description = moveData.Task.Description,
+                    Status = moveData.NewState,
+                    CreatedAt = moveData.Task.CreatedAt,
+                    LastModifiedAt = DateTime.UtcNow
+                };
+
+            await TaskService.UpdateTaskAsync(updatedTask);
+            await RefreshTasks();
+        }
     }
 
     public void Dispose()
