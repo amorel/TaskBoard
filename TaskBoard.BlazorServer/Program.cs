@@ -34,7 +34,10 @@ builder.Logging.SetMinimumLevel(LogLevel.Trace);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+});
 builder.Services.AddHttpClient();
 
 builder.Services.AddServerSideBlazor(options =>
@@ -98,6 +101,31 @@ builder.Services.AddScoped<ICommandHandler<DeleteTaskCommand, Unit>, DeleteTaskC
 builder.Services.AddScoped<IReadmeService, ReadmeService>();
 
 var app = builder.Build();
+var logger = app.Services.GetRequiredService<ILogger<Program>>();
+logger.LogInformation("Starting application...");
+logger.LogInformation("ContentRoot Path: {Path}", app.Environment.ContentRootPath);
+logger.LogInformation("WebRoot Path: {Path}", app.Environment.WebRootPath);
+try
+{
+    var dbPath = builder.Configuration.GetConnectionString("DefaultConnection");
+    dbPath = dbPath.Replace("Data Source=", "").Trim();
+
+    logger.LogInformation("Database Path: {path}", dbPath);
+    logger.LogInformation("Database File Exists: {exists}", File.Exists(dbPath));
+    logger.LogInformation("Current Directory: {dir}", Directory.GetCurrentDirectory());
+
+    if (!File.Exists(dbPath))
+    {
+        var directory = Path.GetDirectoryName(dbPath);
+        logger.LogInformation("Creating Directory: {dir}", directory);
+        Directory.CreateDirectory(directory);
+    }
+}
+catch (Exception ex)
+{
+    logger.LogError(ex, "Error checking database path");
+}
+
 
 using (var scope = app.Services.CreateScope())
 {
@@ -154,9 +182,6 @@ if (!app.Environment.IsDevelopment())
 
             if (exceptionHandlerPathFeature?.Error != null)
             {
-                var logger = context.RequestServices
-                    .GetRequiredService<ILogger<Program>>();
-
                 logger.LogError(exceptionHandlerPathFeature.Error,
                     "Une erreur non gérée est survenue : {ErrorMessage}",
                     exceptionHandlerPathFeature.Error.Message);
