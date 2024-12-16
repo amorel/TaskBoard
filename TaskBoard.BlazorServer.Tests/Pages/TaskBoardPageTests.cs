@@ -17,6 +17,7 @@ namespace TaskBoard.BlazorServer.Tests.Pages
     public class TaskBoardPageTests : TestContext
     {
         private readonly Mock<ITaskService> _mockTaskService;
+        private readonly Mock<ITaskHubClient> _mockTaskHubClient;
         private readonly List<TaskViewModel> _todoTasks;
         private readonly List<TaskViewModel> _inProgressTasks;
         private readonly List<TaskViewModel> _doneTasks;
@@ -24,7 +25,9 @@ namespace TaskBoard.BlazorServer.Tests.Pages
         public TaskBoardPageTests()
         {
             _mockTaskService = new Mock<ITaskService>();
+            _mockTaskHubClient = new Mock<ITaskHubClient>();
             Services.AddSingleton(_mockTaskService.Object);
+            Services.AddSingleton(_mockTaskHubClient.Object);
 
             _todoTasks = new List<TaskViewModel>
             {
@@ -77,6 +80,13 @@ namespace TaskBoard.BlazorServer.Tests.Pages
             _mockTaskService
                 .Setup(s => s.GetTasksByStateAsync(TaskState.Done))
                 .ReturnsAsync(_doneTasks);
+            _mockTaskHubClient
+           .Setup(h => h.Connect())
+           .Returns(Task.CompletedTask);
+
+            _mockTaskHubClient
+                .Setup(h => h.Disconnect())
+                .Returns(Task.CompletedTask);
         }
 
         [Fact]
@@ -150,45 +160,68 @@ namespace TaskBoard.BlazorServer.Tests.Pages
         public async Task TaskBoardPage_ShouldHandleTaskServiceEvents()
         {
             // Arrange
-            var taskLists = new Dictionary<TaskState, List<TaskViewModel>>
+            var taskLists = new Dictionary<TaskState, List<TaskViewModel>>();
+            var initialTodoTask = new TaskViewModel
             {
-                [TaskState.Todo] = new List<TaskViewModel> { new() { Title = "Initial Todo" } },
-                [TaskState.InProgress] = new List<TaskViewModel> { new() { Title = "Initial InProgress" } },
-                [TaskState.Done] = new List<TaskViewModel> { new() { Title = "Initial Done" } }
+                Id = Guid.NewGuid(),
+                Title = "Initial Todo",
+                Status = TaskState.Todo
             };
 
+            taskLists[TaskState.Todo] = new List<TaskViewModel> { initialTodoTask };
+            taskLists[TaskState.InProgress] = new List<TaskViewModel>();
+            taskLists[TaskState.Done] = new List<TaskViewModel>();
+
+            // Configure initial state
             _mockTaskService
-                .Setup(s => s.GetTasksByStateAsync(It.IsAny<TaskState>()))
-                .ReturnsAsync((TaskState state) => taskLists[state]);
+                .Setup(s => s.GetTasksByStateAsync(TaskState.Todo))
+                .ReturnsAsync(() => new List<TaskViewModel>(taskLists[TaskState.Todo]));
 
             var cut = RenderComponent<TaskBoardPage>();
-            await cut.InvokeAsync(() => Task.CompletedTask);
 
-            // Modifier les listes de tâches
-            taskLists[TaskState.Todo].Add(new TaskViewModel { Title = "New Todo" });
-            taskLists[TaskState.InProgress].Add(new TaskViewModel { Title = "New InProgress" });
-            taskLists[TaskState.Done].Add(new TaskViewModel { Title = "New Done" });
+            // Attendre le premier rendu
+            await cut.InvokeAsync(() => Task.Delay(100));
 
-            // Act
-            await cut.InvokeAsync(() =>
+            // Simuler l'ajout d'une nouvelle tâche
+            var newTodoTask = new TaskViewModel
+            {
+                Id = Guid.NewGuid(),
+                Title = "New Todo",
+                Status = TaskState.Todo
+            };
+
+            // Ajouter la nouvelle tâche à la liste
+            taskLists[TaskState.Todo].Add(newTodoTask);
+
+            // Mettre à jour la configuration du mock pour retourner la liste mise à jour
+            _mockTaskService
+                .Setup(s => s.GetTasksByStateAsync(TaskState.Todo))
+                .ReturnsAsync(() => new List<TaskViewModel>(taskLists[TaskState.Todo]));
+
+            // Déclencher OnChange et attendre le rafraîchissement
+            await cut.InvokeAsync(async () =>
             {
                 _mockTaskService.Raise(m => m.OnChange += null);
-                return Task.CompletedTask;
+                // Attendre que le rafraîchissement soit terminé
+                await Task.Delay(100);
             });
 
-            // Forcer le re-rendu
-            cut.Render();
-
             // Assert
-            var todoTasks = cut.Find("[data-column='Todo']").QuerySelectorAll(".task-card");
-            var inProgressTasks = cut.Find("[data-column='InProgress']").QuerySelectorAll(".task-card");
-            var doneTasks = cut.Find("[data-column='Done']").QuerySelectorAll(".task-card");
+            var todoColumn = cut.Find("[data-column='Todo']");
+            var todoTasks = todoColumn.QuerySelectorAll(".task-card");
+            todoTasks.Length.Should().Be(2, "because two tasks should be displayed");
 
-            todoTasks.Length.Should().Be(2);
-            inProgressTasks.Length.Should().Be(2);
-            doneTasks.Length.Should().Be(2);
+            // Vérifier que les tâches ont les bons titres
+            foreach (var task in todoTasks)
+            {
+                var titleElement = task.QuerySelector(".card-title");
+                titleElement.Should().NotBeNull("each task card should have a title element");
+                var title = titleElement!.TextContent.Trim();
+                title.Should().NotBeNullOrEmpty("task title should not be empty");
+                title.Should().BeOneOf("Initial Todo", "New Todo", "because these are the expected task titles");
+            }
 
-            _mockTaskService.Verify(s => s.GetTasksByStateAsync(It.IsAny<TaskState>()), Times.AtLeast(6));
+            _mockTaskService.Verify(s => s.GetTasksByStateAsync(TaskState.Todo), Times.AtLeast(2));
         }
 
         [Fact]

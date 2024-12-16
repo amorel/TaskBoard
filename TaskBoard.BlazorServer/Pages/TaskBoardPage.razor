@@ -39,15 +39,21 @@
 
 @code {
     private TaskViewModel? _draggedTask;
-    private List<TaskViewModel>? _todoTasks;
-    private List<TaskViewModel>? _inProgressTasks;
-    private List<TaskViewModel>? _doneTasks;
     private bool _showCreateDialog;
     private TaskState _newTaskState;
 
     protected override async Task OnInitializedAsync()
     {
         await RefreshTasks();
+
+        TaskService.OnChange += async () =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await RefreshTasks();
+                StateHasChanged();
+            });
+        };
 
         TaskHubClient.OnTaskCreated += HandleTaskCreated;
         TaskHubClient.OnTaskUpdated += HandleTaskUpdated;
@@ -163,14 +169,14 @@
         {
             Logger.LogInformation($"Moving task: {moveData.Task.Title} from {moveData.Task.Status} to {moveData.NewState}");
             var updatedTask = new TaskViewModel
-            {
-                Id = moveData.Task.Id,
-                Title = moveData.Task.Title,
-                Description = moveData.Task.Description,
-                Status = moveData.NewState,
-                CreatedAt = moveData.Task.CreatedAt,
-                LastModifiedAt = DateTime.UtcNow
-            };
+                {
+                    Id = moveData.Task.Id,
+                    Title = moveData.Task.Title,
+                    Description = moveData.Task.Description,
+                    Status = moveData.NewState,
+                    CreatedAt = moveData.Task.CreatedAt,
+                    LastModifiedAt = DateTime.UtcNow
+                };
 
             try
             {
@@ -187,14 +193,24 @@
     }
 
     private Dictionary<TaskState, List<TaskViewModel>> _tasksByState = new()
-    {
-        { TaskState.Todo, new List<TaskViewModel>() },
-        { TaskState.InProgress, new List<TaskViewModel>() },
-        { TaskState.Done, new List<TaskViewModel>() }
-    };
+{
+{ TaskState.Todo, new List<TaskViewModel>() },
+{ TaskState.InProgress, new List<TaskViewModel>() },
+{ TaskState.Done, new List<TaskViewModel>() }
+};
 
     public void Dispose()
     {
-        TaskService.OnChange -= StateHasChanged;
+        if (TaskService != null)
+        {
+            TaskService.OnChange -= async () =>
+            {
+                await InvokeAsync(async () =>
+                {
+                    await RefreshTasks();
+                    StateHasChanged();
+                });
+            };
+        }
     }
 }

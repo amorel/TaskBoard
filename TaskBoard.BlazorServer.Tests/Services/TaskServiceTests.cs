@@ -12,6 +12,7 @@ using TaskBoard.BlazorServer.Services;
 using TaskBoard.BlazorServer.ViewModels;
 using TaskBoard.Domain.Entities;
 using TaskBoard.Domain.Enums;
+using Microsoft.Extensions.Logging;
 
 namespace TaskBoard.BlazorServer.Tests.Services
 {
@@ -23,7 +24,8 @@ namespace TaskBoard.BlazorServer.Tests.Services
         private readonly Mock<ICommandHandler<CreateTaskCommand, BoardTask>> _mockCreateTaskHandler;
         private readonly Mock<ICommandHandler<UpdateTaskCommand, BoardTask>> _mockUpdateTaskHandler;
         private readonly Mock<ICommandHandler<DeleteTaskCommand, Unit>> _mockDeleteTaskHandler;
-        private readonly TaskService _service;
+        private readonly Mock<ITaskHubClient> _mockTaskHubClient;
+        private readonly Mock<ILogger<TaskService>> _mockLogger; private readonly TaskService _service;
         private bool _onChangeWasCalled;
 
         public TaskServiceTests()
@@ -34,6 +36,8 @@ namespace TaskBoard.BlazorServer.Tests.Services
             _mockCreateTaskHandler = new Mock<ICommandHandler<CreateTaskCommand, BoardTask>>();
             _mockUpdateTaskHandler = new Mock<ICommandHandler<UpdateTaskCommand, BoardTask>>();
             _mockDeleteTaskHandler = new Mock<ICommandHandler<DeleteTaskCommand, Unit>>();
+            _mockTaskHubClient = new Mock<ITaskHubClient>();
+            _mockLogger = new Mock<ILogger<TaskService>>();
 
             _service = new TaskService(
                 _mockGetAllTasksHandler.Object,
@@ -41,7 +45,9 @@ namespace TaskBoard.BlazorServer.Tests.Services
                 _mockGetTasksByStateHandler.Object,
                 _mockCreateTaskHandler.Object,
                 _mockUpdateTaskHandler.Object,
-                _mockDeleteTaskHandler.Object
+                _mockDeleteTaskHandler.Object,
+                _mockTaskHubClient.Object,
+                _mockLogger.Object
             );
 
             _service.OnChange += () => _onChangeWasCalled = true;
