@@ -107,69 +107,50 @@ logger.LogInformation("ContentRoot Path: {Path}", app.Environment.ContentRootPat
 logger.LogInformation("WebRoot Path: {Path}", app.Environment.WebRootPath);
 try
 {
-    var dbPath = builder.Configuration.GetConnectionString("DefaultConnection");
-    dbPath = dbPath.Replace("Data Source=", "").Trim();
+    var dbPath = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?.Replace("Data Source=", "")
+        ?.Trim();
 
-    logger.LogInformation("Database Path: {path}", dbPath);
-    logger.LogInformation("Database File Exists: {exists}", File.Exists(dbPath));
-    logger.LogInformation("Current Directory: {dir}", Directory.GetCurrentDirectory());
-
-    if (!File.Exists(dbPath))
+    if (!string.IsNullOrEmpty(dbPath))
     {
+        logger.LogInformation("Database Path: {path}", dbPath);
+
+        // Obtenir le répertoire de la base de données
         var directory = Path.GetDirectoryName(dbPath);
-        logger.LogInformation("Creating Directory: {dir}", directory);
-        Directory.CreateDirectory(directory);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            logger.LogInformation("Creating database directory: {dir}", directory);
+            Directory.CreateDirectory(directory);
+        }
+
+        logger.LogInformation("Database File Exists: {exists}", File.Exists(dbPath));
     }
 }
 catch (Exception ex)
 {
-    logger.LogError(ex, "Error checking database path");
+    logger.LogError(ex, "Error configuring database path");
+    throw; // Important de relancer l'exception
 }
-
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TaskBoardDbContext>();
     try
     {
-        Console.WriteLine("Attempting to apply migrations...");
+        logger.LogInformation("Applying database migrations...");
         await db.Database.MigrateAsync();
-        Console.WriteLine("Migrations applied successfully");
-        app.Logger.LogInformation("Database migrations applied successfully");
+        logger.LogInformation("Database migrations applied successfully");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"An error occurred while applying migrations: {ex.Message}");
-        app.Logger.LogError(ex, "An error occurred while applying migrations");
-        throw; // Relancer l'exception pour être sûr que l'app ne démarre pas sans BDD
+        logger.LogError(ex, "Error applying database migrations");
+        throw;
     }
 }
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    var folder = Path.GetDirectoryName(connectionString);
-
-    Console.WriteLine($"Connection string: {connectionString}");
-    Console.WriteLine($"Folder path: {folder}");
-
-    if (!string.IsNullOrEmpty(folder) && !Directory.Exists(folder))
-    {
-        try
-        {
-            Directory.CreateDirectory(folder);
-            Console.WriteLine($"Created directory: {folder}");
-            app.Logger.LogInformation($"Created database directory: {folder}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error creating directory: {ex.Message}");
-            app.Logger.LogError(ex, "Error creating database directory");
-            throw;
-        }
-    }
-
     app.UseExceptionHandler(errorApp =>
     {
         errorApp.Run(async context =>
