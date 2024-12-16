@@ -1,13 +1,105 @@
 # Task Board - Tableau de bord collaboratif en temps réel
 
-## À propos du projet
-Ce projet est un tableau de bord collaboratif en temps réel développé avec Blazor Server pour la gestion de projets. Il permet aux utilisateurs de gérer des tâches de manière interactive et collaborative, avec des mises à jour en temps réel pour tous les utilisateurs connectés.
+# Présentation générale
 
-## Architecture et choix techniques
-- **Clean Architecture** : Le projet est structuré selon les principes de la Clean Architecture pour assurer une séparation claire des responsabilités et faciliter la maintenance et les tests.
-- **Blazor Server** : Choisi pour ses capacités de mise à jour en temps réel via SignalR et son intégration naturelle avec .NET.
-- **MVVM (Model-View-ViewModel)** : Pattern utilisé pour séparer la logique de présentation des vues et faciliter les tests unitaires.
-- **SQLite** : Base de données légère et sans serveur, parfaite pour le développement et le prototypage.
+Ce projet est une application Blazor Server qui implémente un tableau kanban collaboratif en temps réel, permettant à plusieurs utilisateurs de gérer des tâches simultanément avec des mises à jour instantanées. L'application est hébergée sur Azure et bénéficie d'un déploiement continu via GitHub Actions.
+
+## Technologies utilisées
+
+### Frontend
+- **Blazor Server**: Framework permettant une expérience temps réel grâce à SignalR
+- **Bootstrap 5**: Framework CSS pour un design responsive
+- **JavaScript**: Pour la gestion du drag & drop natif HTML5
+
+### Backend
+- **NET 9.0**: La dernière version du framework .NET
+- **Entity Framework Core**: ORM pour la gestion de la base de données
+- **SQLite**: Base de données légère et embarquée
+- **SignalR**: Pour la communication en temps réel
+
+### Tests
+- **xUnit**: Framework de tests
+- **bUnit**: Pour tester les composants Blazor
+- **FluentAssertions**: Pour des assertions plus lisibles
+- **Moq**: Pour le mocking dans les tests
+
+### Hébergement & CI/CD
+- **Azure App Service**: Pour l'hébergement de l'application
+- **GitHub Actions**: Pour l'automatisation du déploiement
+- **Azure Application Insights**: Pour la télémétrie et le monitoring
+
+## Architecture & Bonnes Pratiques
+
+### Clean Architecture
+L'application est structurée en 4 couches distinctes :
+
+1. **Domain**: Contient les entités et interfaces du domaine
+2. **Application**: Contient la logique métier (CQRS pattern)
+3. **Infrastructure**: Gère la persistance et les services externes
+4. **Presentation**: Interface utilisateur Blazor
+
+### Patterns Implémentés
+- CQRS: Séparation des opérations de lecture et d'écriture
+- Repository Pattern: Abstraction de la couche de données
+- MVVM: Pour la séparation des préoccupations dans l'UI
+- Dependency Injection: Pour un couplage faible entre les composants
+
+### Tests
+- Tests unitaires pour chaque couche
+- Tests d'intégration pour la persistance
+- Tests de composants UI avec bUnit
+- Tests de performance pour les opérations critiques
+
+### Temps Réel
+- Utilisation de SignalR pour la communication bidirectionnelle
+- Hub dédié pour la gestion des événements temps réel
+- Gestion optimisée des connexions et reconnexions
+
+### Sécurité & Performance
+- Protection CSRF automatique via Blazor
+- Gestion des erreurs centralisée
+- Logging structuré avec différents niveaux de détails
+- Optimisation des requêtes avec Entity Framework Core
+
+## Déploiement
+
+### Infrastructure Azure
+- App Service Plan en région France Central
+- Base de données SQLite hébergée dans le système de fichiers de l'App Service
+- Application Insights pour le monitoring
+
+### Pipeline CI/CD
+Le déploiement est entièrement automatisé via GitHub Actions :
+
+1. Déclenchement sur push vers la branche master
+2. Exécution des tests unitaires et d'intégration
+3. Build de l'application en mode Release
+4. Déploiement vers Azure App Service
+5. Validation post-déploiement
+
+## [Task Board - DEMO - Azure](https://taskboard-demo-ghepg6c0d9dqhfex.francecentral-01.azurewebsites.net "Task Board - Tableau de bord collaboratif en temps réel")
+
+## Exécution des tests
+
+### Exécuter tous les tests
+```bash
+dotnet test
+```
+
+### Exécuter les tests par projet
+```bash
+# Tests du Domain
+dotnet test TaskBoard.Domain.Tests/TaskBoard.Domain.Tests.csproj
+
+# Tests de l'Application
+dotnet test TaskBoard.Application.Tests/TaskBoard.Application.Tests.csproj
+
+# Tests de l'Infrastructure
+dotnet test TaskBoard.Infrastructure.Tests/TaskBoard.Infrastructure.Tests.csproj
+
+# Tests de la couche présentation (Blazor)
+dotnet test TaskBoard.BlazorServer.Tests/TaskBoard.BlazorServer.Tests.csproj
+```
 
 ## Journal de développement
 
