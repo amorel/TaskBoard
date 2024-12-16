@@ -49,9 +49,9 @@
         TaskService.OnChange += async () =>
         {
             await InvokeAsync(async () =>
-            {
-                await RefreshTasks();
-                StateHasChanged();
+    {
+    await RefreshTasks();
+    StateHasChanged();
             });
         };
 
@@ -123,15 +123,25 @@
 
     public async ValueTask DisposeAsync()
     {
-        TaskHubClient.OnTaskCreated -= HandleTaskCreated;
-        TaskHubClient.OnTaskUpdated -= HandleTaskUpdated;
-        TaskHubClient.OnTaskDeleted -= HandleTaskDeleted;
-
-        if (TaskHubClient is IAsyncDisposable disposable)
+        try
         {
-            await disposable.DisposeAsync();
+            // Désabonner des événements d'abord
+            TaskHubClient.OnTaskCreated -= HandleTaskCreated;
+            TaskHubClient.OnTaskUpdated -= HandleTaskUpdated;
+            TaskHubClient.OnTaskDeleted -= HandleTaskDeleted;
+            TaskHubClient.OnTaskMoved -= HandleTaskMoved;
+
+            if (TaskService is IAsyncDisposable taskServiceDisposable)
+            {
+                await taskServiceDisposable.DisposeAsync();
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // Ignorer les erreurs de disposition
         }
     }
+
     private async Task RefreshTasks()
     {
         foreach (var state in _tasksByState.Keys.ToList())
@@ -206,9 +216,9 @@
             TaskService.OnChange -= async () =>
             {
                 await InvokeAsync(async () =>
-                {
-                    await RefreshTasks();
-                    StateHasChanged();
+    {
+    await RefreshTasks();
+    StateHasChanged();
                 });
             };
         }

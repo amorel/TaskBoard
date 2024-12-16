@@ -8,10 +8,11 @@ namespace TaskBoard.BlazorServer.Services
     public class TaskHubClient : ITaskHubClient, IAsyncDisposable
     {
         private readonly HubConnection _hubConnection;
-        private readonly string _hubUrl;
-        private readonly ILogger<TaskHubClient> _logger;
         private readonly SemaphoreSlim _connectionLock = new SemaphoreSlim(1, 1);
+        private readonly ILogger<TaskHubClient> _logger;
         private bool _isConnected;
+        private bool _disposed;
+        private readonly string _hubUrl;
         private readonly IConfiguration _configuration;
 
         public event Action<TaskViewModel>? OnTaskCreated;
@@ -160,7 +161,7 @@ namespace TaskBoard.BlazorServer.Services
             {
                 await _connectionLock.WaitAsync();
 
-                if (!_isConnected)
+                if (!_disposed && !_isConnected)
                 {
                     _logger.LogInformation("Attempting to connect to SignalR hub...");
                     await _hubConnection.StartAsync();
@@ -182,22 +183,57 @@ namespace TaskBoard.BlazorServer.Services
 
         public async Task Disconnect()
         {
+            if (_disposed) return;
+
             try
             {
-                await _hubConnection.StopAsync();
-                _isConnected = false;
-                _logger.LogInformation("Disconnected from SignalR Hub");
+                if (_connectionLock.CurrentCount == 0)
+                {
+                    _logger.LogWarning("Connection lock is already held during disconnect");
+                    return;
+                }
+
+                await _connectionLock.WaitAsync();
+                if (_isConnected)
+                {
+                    await _hubConnection.StopAsync();
+                    _isConnected = false;
+                    _logger.LogInformation("Disconnected from SignalR Hub");
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // Ignorer si déjà disposé
+                _logger.LogInformation("Hub connection already disposed");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error disconnecting from SignalR Hub");
             }
+            finally
+            {
+                if (!_disposed)
+                {
+                    _connectionLock.Release();
+                }
+            }
         }
 
         public async ValueTask DisposeAsync()
         {
-            await Disconnect();
-            await _hubConnection.DisposeAsync();
+            if (_disposed) return;
+
+            _disposed = true;
+
+            try
+            {
+                await Disconnect();
+            }
+            finally
+            {
+                await _hubConnection.DisposeAsync();
+                _connectionLock.Dispose();
+            }
         }
     }
 }
