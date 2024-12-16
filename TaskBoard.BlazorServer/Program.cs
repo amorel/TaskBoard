@@ -77,11 +77,6 @@ builder.Services.Configure<HubConnectionContextOptions>(options =>
     options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
 });
 
-if (builder.Environment.IsDevelopment())
-{
-    builder.Configuration["BaseUrl"] = "http://localhost:5201";
-}
-
 // Add Infrastructure services
 builder.Services.AddInfrastructure(
     builder.Configuration.GetConnectionString("DefaultConnection")!);
@@ -112,10 +107,12 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("Attempting to apply migrations...");
         await db.Database.MigrateAsync();
         Console.WriteLine("Migrations applied successfully");
+        app.Logger.LogInformation("Database migrations applied successfully");
     }
     catch (Exception ex)
     {
         Console.WriteLine($"An error occurred while applying migrations: {ex.Message}");
+        app.Logger.LogError(ex, "An error occurred while applying migrations");
         throw; // Relancer l'exception pour être sûr que l'app ne démarre pas sans BDD
     }
 }
@@ -135,10 +132,13 @@ if (!app.Environment.IsDevelopment())
         {
             Directory.CreateDirectory(folder);
             Console.WriteLine($"Created directory: {folder}");
+            app.Logger.LogInformation($"Created database directory: {folder}");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error creating directory: {ex.Message}");
+            app.Logger.LogError(ex, "Error creating database directory");
+            throw;
         }
     }
 
@@ -158,14 +158,33 @@ if (!app.Environment.IsDevelopment())
                     .GetRequiredService<ILogger<Program>>();
 
                 logger.LogError(exceptionHandlerPathFeature.Error,
-                    "Une erreur est survenue : {ErrorMessage}",
+                    "Une erreur non gérée est survenue : {ErrorMessage}",
                     exceptionHandlerPathFeature.Error.Message);
 
-                await context.Response.WriteAsync("<html><body>\n");
-                await context.Response.WriteAsync(
-                    "<h2>Une erreur est survenue dans l'application.</h2>\n");
-                await context.Response.WriteAsync("<hr>\n");
-                await context.Response.WriteAsync("</body></html>\n");
+                // En production, ajouter plus d'informations dans le log
+                if (!app.Environment.IsDevelopment())
+                {
+                    logger.LogError("Stack trace: {StackTrace}",
+                        exceptionHandlerPathFeature.Error.StackTrace);
+                }
+
+                await context.Response.WriteAsync($@"
+                    <html>
+                        <head>
+                            <title>Erreur - TaskBoard</title>
+                            <link href=""css/bootstrap/bootstrap.min.css"" rel=""stylesheet"" />
+                        </head>
+                        <body class=""container mt-5"">
+                            <div class=""alert alert-danger"">
+                                <h4>Une erreur est survenue</h4>
+                                <p>Nous avons été notifiés et travaillons à résoudre le problème.</p>
+                                <hr>
+                                <p class=""mb-0"">
+                                    <a href=""/"" class=""btn btn-primary"">Retour à l'accueil</a>
+                                </p>
+                            </div>
+                        </body>
+                    </html>");
             }
         });
     });
@@ -174,6 +193,7 @@ if (!app.Environment.IsDevelopment())
 else
 {
     app.UseDeveloperExceptionPage();
+    builder.Configuration["BaseUrl"] = "http://localhost:5201";
 }
 
 app.UseHttpsRedirection();
