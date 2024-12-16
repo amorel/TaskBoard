@@ -17,6 +17,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 using TaskBoard.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using TaskBoard.BlazorServer.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,7 +34,7 @@ builder.Logging.SetMinimumLevel(LogLevel.Trace);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-
+builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 
 builder.Services.AddServerSideBlazor(options =>
@@ -61,12 +63,32 @@ builder.Services.Configure<CircuitOptions>(options =>
     options.DetailedErrors = true;
 });
 
+builder.Services.Configure<HubOptions>(options =>
+{
+    options.EnableDetailedErrors = true;
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+    options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+});
+
+builder.Services.Configure<HubConnectionContextOptions>(options =>
+{
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+});
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration["BaseUrl"] = "http://localhost:5201";
+}
+
 // Add Infrastructure services
 builder.Services.AddInfrastructure(
     builder.Configuration.GetConnectionString("DefaultConnection")!);
 
 // Add Application services
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<ITaskHubClient, TaskHubClient>();
 
 // Register Query Handlers
 builder.Services.AddScoped<IQueryHandler<GetAllTasksQuery, IEnumerable<BoardTask>>, GetAllTasksQueryHandler>();
@@ -159,6 +181,7 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.MapBlazorHub();
+app.MapHub<TaskHub>("/taskhub");
 app.MapFallbackToPage("/_Host");
 
 app.Run();

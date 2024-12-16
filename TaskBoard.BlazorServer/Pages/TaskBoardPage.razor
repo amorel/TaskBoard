@@ -5,25 +5,29 @@
 @using TaskBoard.Domain.Enums
 @inject ILogger<TaskBoardPage> Logger
 @inject ITaskService TaskService
+@inject ITaskHubClient TaskHubClient
+@implements IAsyncDisposable
 
 <div class="container-fluid">
     <h1>Task Board</h1>
 
     <div class="row">
         <div class="col-md-4">
-            <TaskColumn Title="À faire" State="TaskState.Todo" Tasks="_todoTasks" OnTaskUpdated="RefreshTasks"
-                OnTaskDeleted="RefreshTasks" OnAddTask="OpenCreateDialog" OnTaskMoved="HandleTaskMoved" />
-        </div>
-
-        <div class="col-md-4">
-            <TaskColumn Title="En cours" State="TaskState.InProgress" Tasks="_inProgressTasks"
+            <TaskColumn Title="À faire" State="TaskState.Todo" Tasks="_tasksByState[TaskState.Todo]"
                 OnTaskUpdated="RefreshTasks" OnTaskDeleted="RefreshTasks" OnAddTask="OpenCreateDialog"
                 OnTaskMoved="HandleTaskMoved" />
         </div>
 
         <div class="col-md-4">
-            <TaskColumn Title="Terminé" State="TaskState.Done" Tasks="_doneTasks" OnTaskUpdated="RefreshTasks"
-                OnTaskDeleted="RefreshTasks" OnAddTask="OpenCreateDialog" OnTaskMoved="HandleTaskMoved" />
+            <TaskColumn Title="En cours" State="TaskState.InProgress" Tasks="_tasksByState[TaskState.InProgress]"
+                OnTaskUpdated="RefreshTasks" OnTaskDeleted="RefreshTasks" OnAddTask="OpenCreateDialog"
+                OnTaskMoved="HandleTaskMoved" />
+        </div>
+
+        <div class="col-md-4">
+            <TaskColumn Title="Terminé" State="TaskState.Done" Tasks="_tasksByState[TaskState.Done]"
+                OnTaskUpdated="RefreshTasks" OnTaskDeleted="RefreshTasks" OnAddTask="OpenCreateDialog"
+                OnTaskMoved="HandleTaskMoved" />
         </div>
     </div>
 </div>
@@ -44,15 +48,90 @@
     protected override async Task OnInitializedAsync()
     {
         await RefreshTasks();
-        TaskService.OnChange += async () => await RefreshTasks();
+
+        TaskHubClient.OnTaskCreated += HandleTaskCreated;
+        TaskHubClient.OnTaskUpdated += HandleTaskUpdated;
+        TaskHubClient.OnTaskDeleted += HandleTaskDeleted;
+        TaskHubClient.OnTaskMoved += HandleTaskMoved;
+
+        await TaskHubClient.Connect();
     }
 
+    private async void HandleTaskMoved(Guid taskId, TaskState newState)
+    {
+        await InvokeAsync(async () =>
+        {
+            var task = await TaskService.GetTaskByIdAsync(taskId);
+            if (task != null)
+            {
+                // Supprimer de l'ancien état
+                foreach (var state in _tasksByState.Keys)
+                {
+                    _tasksByState[state].RemoveAll(t => t.Id == taskId);
+                }
+
+                // Mettre à jour l'état et ajouter à la nouvelle liste
+                task.Status = newState;
+                _tasksByState[newState].Add(task);
+
+                StateHasChanged();
+            }
+        });
+    }
+
+    private async void HandleTaskCreated(TaskViewModel task)
+    {
+        await InvokeAsync(() =>
+        {
+            _tasksByState[task.Status].Add(task);
+            StateHasChanged();
+        });
+    }
+
+    private async void HandleTaskUpdated(TaskViewModel task)
+    {
+        await InvokeAsync(() =>
+        {
+            // Supprimer la tâche de toutes les listes
+            foreach (var state in _tasksByState.Keys)
+            {
+                _tasksByState[state].RemoveAll(t => t.Id == task.Id);
+            }
+            // Ajouter la tâche mise à jour dans la bonne liste
+            _tasksByState[task.Status].Add(task);
+            StateHasChanged();
+        });
+    }
+
+    private async void HandleTaskDeleted(Guid taskId)
+    {
+        await InvokeAsync(() =>
+        {
+            foreach (var state in _tasksByState.Keys)
+            {
+                _tasksByState[state].RemoveAll(t => t.Id == taskId);
+            }
+            StateHasChanged();
+        });
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        TaskHubClient.OnTaskCreated -= HandleTaskCreated;
+        TaskHubClient.OnTaskUpdated -= HandleTaskUpdated;
+        TaskHubClient.OnTaskDeleted -= HandleTaskDeleted;
+
+        if (TaskHubClient is IAsyncDisposable disposable)
+        {
+            await disposable.DisposeAsync();
+        }
+    }
     private async Task RefreshTasks()
     {
-        _todoTasks = (await TaskService.GetTasksByStateAsync(TaskState.Todo)).ToList();
-        _inProgressTasks = (await TaskService.GetTasksByStateAsync(TaskState.InProgress)).ToList();
-        _doneTasks = (await TaskService.GetTasksByStateAsync(TaskState.Done)).ToList();
-        StateHasChanged();
+        foreach (var state in _tasksByState.Keys.ToList())
+        {
+            _tasksByState[state] = (await TaskService.GetTasksByStateAsync(state)).ToList();
+        }
     }
 
     private void OpenCreateDialog(TaskState state)
@@ -84,14 +163,14 @@
         {
             Logger.LogInformation($"Moving task: {moveData.Task.Title} from {moveData.Task.Status} to {moveData.NewState}");
             var updatedTask = new TaskViewModel
-                {
-                    Id = moveData.Task.Id,
-                    Title = moveData.Task.Title,
-                    Description = moveData.Task.Description,
-                    Status = moveData.NewState,
-                    CreatedAt = moveData.Task.CreatedAt,
-                    LastModifiedAt = DateTime.UtcNow
-                };
+            {
+                Id = moveData.Task.Id,
+                Title = moveData.Task.Title,
+                Description = moveData.Task.Description,
+                Status = moveData.NewState,
+                CreatedAt = moveData.Task.CreatedAt,
+                LastModifiedAt = DateTime.UtcNow
+            };
 
             try
             {
@@ -103,10 +182,16 @@
             catch (Exception ex)
             {
                 Logger.LogError($"Error updating task: {ex.Message}");
-                Console.WriteLine($"Error updating task: {ex.Message}");
             }
         }
     }
+
+    private Dictionary<TaskState, List<TaskViewModel>> _tasksByState = new()
+    {
+        { TaskState.Todo, new List<TaskViewModel>() },
+        { TaskState.InProgress, new List<TaskViewModel>() },
+        { TaskState.Done, new List<TaskViewModel>() }
+    };
 
     public void Dispose()
     {
